@@ -1,0 +1,7 @@
+itadmin    2.5  51200
+itadmin    0.3  12800
+jsmith     5.1  102400
+jsmith     0.8  25600
+root       0.1   8192
+devuser   15.2  204800
+devuser    3.4   51200

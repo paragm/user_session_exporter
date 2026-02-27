@@ -1,0 +1,5 @@
+State    Recv-Q Send-Q Local Address:Port  Peer Address:Port Process
+ESTAB    0      0      192.168.1.10:22     192.168.1.100:52100
+ESTAB    0      0      192.168.1.10:22     192.168.1.101:52300
+ESTAB    0      0      192.168.1.10:22     10.0.0.1:52200
+ESTAB    0      0      192.168.1.10:22     192.168.1.102:52400

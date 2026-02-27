@@ -1,0 +1,7 @@
+Mar  2 08:01:15 host01 sshd[12345]: Failed password for invalid user admin from 203.0.113.50 port 44231 ssh2
+Mar  2 08:01:18 host01 sshd[12346]: Failed password for invalid user test from 203.0.113.50 port 44232 ssh2
+Mar  2 08:01:20 host01 sshd[12347]: Failed password for root from 203.0.113.51 port 44233 ssh2
+Mar  2 08:05:00 host01 sshd[12400]: Accepted publickey for itadmin from 192.168.1.100 port 52100 ssh2
+Mar  2 08:10:00 host01 sshd[12500]: Accepted password for root from 10.0.0.1 port 52200 ssh2
+Mar  2 09:15:00 host01 sshd[12600]: Accepted publickey for jsmith from 192.168.1.101 port 52300 ssh2
+Mar  2 10:30:00 host01 sshd[12700]: Failed password for invalid user hack from 198.51.100.10 port 44300 ssh2

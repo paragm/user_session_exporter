@@ -1,0 +1,7 @@
+Username         Port     From             Latest
+root             pts/2    10.0.0.1         Sun Mar  2 08:00:00 +0000 2026
+itadmin          pts/0    192.168.1.100    Sun Mar  2 09:15:00 +0000 2026
+jsmith           pts/1    192.168.1.101    Sun Mar  2 10:30:00 +0000 2026
+devuser          pts/3    192.168.1.102    Sun Mar  2 11:45:00 +0000 2026
+daemon                                     **Never logged in**
+nobody                                     **Never logged in**
