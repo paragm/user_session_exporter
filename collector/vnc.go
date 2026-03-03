@@ -21,6 +21,7 @@ type VNCCollector struct {
 	count int // cached count from last Collect or CountVNC call
 }
 
+// NewVNCCollector creates a new VNCCollector.
 func NewVNCCollector(cfg Config) *VNCCollector {
 	return &VNCCollector{
 		cfg: cfg,
@@ -32,10 +33,12 @@ func NewVNCCollector(cfg Config) *VNCCollector {
 	}
 }
 
+// Describe implements prometheus.Collector.
 func (c *VNCCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- c.descVNC
 }
 
+// Collect implements prometheus.Collector.
 func (c *VNCCollector) Collect(ch chan<- prometheus.Metric) {
 	count, err := c.countVNCConnections(context.Background())
 	if err != nil {

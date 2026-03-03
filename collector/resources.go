@@ -21,6 +21,7 @@ type ResourceCollector struct {
 	descProc *prometheus.Desc
 }
 
+// NewResourceCollector creates a new ResourceCollector.
 func NewResourceCollector(cfg Config) *ResourceCollector {
 	return &ResourceCollector{
 		cfg: cfg,
@@ -42,12 +43,14 @@ func NewResourceCollector(cfg Config) *ResourceCollector {
 	}
 }
 
+// Describe implements prometheus.Collector.
 func (c *ResourceCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- c.descCPU
 	ch <- c.descMem
 	ch <- c.descProc
 }
 
+// Collect implements prometheus.Collector.
 func (c *ResourceCollector) Collect(ch chan<- prometheus.Metric) {
 	resources, err := collectUserResources(context.Background())
 	if err != nil {

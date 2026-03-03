@@ -17,12 +17,8 @@ linters:
   settings:
     gocritic:
       enabled-checks:
-        - appendAssign
         - boolExprSimplify
-        - dupBranchBody
-        - dupCase
         - equalFold
-        - exitAfterDefer
         - hugeParam
         - indexAlloc
         - initClause
@@ -31,7 +27,6 @@ linters:
         - rangeExprCopy
         - ruleguard
         - truncateCmp
-        - underef
         - unnamedResult
     revive:
       rules:
