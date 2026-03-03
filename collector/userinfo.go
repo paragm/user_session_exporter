@@ -11,6 +11,7 @@ type UserInfoCollector struct {
 	activeUsersFn func() []string
 }
 
+// NewUserInfoCollector creates a new UserInfoCollector.
 func NewUserInfoCollector(cfg Config, activeUsersFn func() []string) *UserInfoCollector {
 	return &UserInfoCollector{
 		cfg: cfg,
@@ -23,10 +24,12 @@ func NewUserInfoCollector(cfg Config, activeUsersFn func() []string) *UserInfoCo
 	}
 }
 
+// Describe implements prometheus.Collector.
 func (c *UserInfoCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- c.descInfo
 }
 
+// Collect implements prometheus.Collector.
 func (c *UserInfoCollector) Collect(ch chan<- prometheus.Metric) {
 	users := c.activeUsersFn()
 

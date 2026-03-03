@@ -42,6 +42,7 @@ func (c *LastlogCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- c.descLastlog
 }
 
+// Collect implements prometheus.Collector.
 func (c *LastlogCollector) Collect(ch chan<- prometheus.Metric) {
 	c.mu.RLock()
 	needsRefresh := time.Since(c.cacheTime) >= c.cacheTTL

@@ -35,6 +35,7 @@ type SessionCollector struct {
 	lastUsers []string // cached active usernames from last Collect
 }
 
+// NewSessionCollector creates a new SessionCollector.
 func NewSessionCollector(cfg Config) *SessionCollector {
 	return &SessionCollector{
 		cfg: cfg,
@@ -51,16 +52,18 @@ func NewSessionCollector(cfg Config) *SessionCollector {
 	}
 }
 
+// Describe implements prometheus.Collector.
 func (c *SessionCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- c.descLogged
 	ch <- c.descSession
 }
 
+// Collect implements prometheus.Collector.
 func (c *SessionCollector) Collect(ch chan<- prometheus.Metric) {
 	var allSessions []Session
 
 	// Collect from all sources, tolerating individual failures
-	if ptySessions, err := collectWhoSessions(context.Background(), c.cfg.Logger); err == nil {
+	if ptySessions, err := collectWhoSessions(context.Background()); err == nil {
 		allSessions = append(allSessions, ptySessions...)
 	} else {
 		c.cfg.Logger.Error("failed to collect PTY sessions", "err", err)
@@ -128,7 +131,7 @@ func (c *SessionCollector) ActiveUsers() []string {
 
 // collectWhoSessions parses the output of the `who` command.
 // Output format: "username  pts/0  2024-01-15 09:32 (192.168.1.10)"
-func collectWhoSessions(ctx context.Context, logger *slog.Logger) ([]Session, error) {
+func collectWhoSessions(ctx context.Context) ([]Session, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 	out, err := exec.CommandContext(ctx, "who").Output()
@@ -240,7 +243,7 @@ func collectNonPTYSSH(ctx context.Context, logger *slog.Logger, cache *UserLooku
 
 // resolveVNCUser resolves the username for a VNC connection from the ss process field.
 // Falls back to finding the Xvnc process listening on the given local port.
-func resolveVNCUser(processField string, localPort int, logger *slog.Logger, cache *UserLookupCache) string {
+func resolveVNCUser(processField string, localPort int, cache *UserLookupCache) string {
 	if processField != "" {
 		matches := ssPIDRegex.FindStringSubmatch(processField)
 		if len(matches) >= 2 {
@@ -250,7 +253,7 @@ func resolveVNCUser(processField string, localPort int, logger *slog.Logger, cac
 		}
 	}
 	if localPort > 0 {
-		return resolveVNCOwner(context.Background(), localPort, logger, cache)
+		return resolveVNCOwner(context.Background(), localPort, cache)
 	}
 	return ""
 }
@@ -281,7 +284,7 @@ func collectVNCSessions(ctx context.Context, logger *slog.Logger, cache *UserLoo
 		localAddr, peerAddr, processField := parseSSFields(fields)
 		localPort := extractPort(localAddr)
 
-		username := resolveVNCUser(processField, localPort, logger, cache)
+		username := resolveVNCUser(processField, localPort, cache)
 		if username == "" {
 			continue
 		}
@@ -347,7 +350,7 @@ func resolveProcessUser(pid string, cache *UserLookupCache) (string, error) {
 
 // resolveVNCOwner finds the Xvnc/Xtigervnc process listening on the given port
 // and returns its owner username.
-func resolveVNCOwner(ctx context.Context, port int, logger *slog.Logger, cache *UserLookupCache) string {
+func resolveVNCOwner(ctx context.Context, port int, cache *UserLookupCache) string {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 	// Find the listening process on this specific port

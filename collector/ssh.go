@@ -19,6 +19,7 @@ type SSHCollector struct {
 	vncCountFn func() (int, error)
 }
 
+// NewSSHCollector creates a new SSHCollector.
 func NewSSHCollector(cfg Config, vncCountFn func() (int, error)) *SSHCollector {
 	return &SSHCollector{
 		cfg: cfg,
@@ -36,11 +37,13 @@ func NewSSHCollector(cfg Config, vncCountFn func() (int, error)) *SSHCollector {
 	}
 }
 
+// Describe implements prometheus.Collector.
 func (c *SSHCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- c.descSSH
 	ch <- c.descRemote
 }
 
+// Collect implements prometheus.Collector.
 func (c *SSHCollector) Collect(ch chan<- prometheus.Metric) {
 	sshCount, err := countSSHConnections(context.Background())
 	if err != nil {
