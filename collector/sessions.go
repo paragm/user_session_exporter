@@ -321,7 +321,7 @@ func parseSSFields(fields []string) (localAddr, peerAddr, processField string) {
 // to username via the shared UserLookupCache (timeout-protected NSS lookup).
 func resolveProcessUser(pid string, cache *UserLookupCache) (string, error) {
 	statusPath := filepath.Join("/proc", pid, "status")
-	data, err := os.ReadFile(statusPath)
+	data, err := os.ReadFile(statusPath) //nolint:gosec // path constructed from numeric PID, not user input
 	if err != nil {
 		return "", fmt.Errorf("read %s: %w", statusPath, err)
 	}
@@ -351,7 +351,7 @@ func resolveVNCOwner(ctx context.Context, port int, logger *slog.Logger, cache *
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 	// Find the listening process on this specific port
-	out, err := exec.CommandContext(ctx, "ss", "-tlnp", "sport", "=", fmt.Sprintf(":%d", port)).Output()
+	out, err := exec.CommandContext(ctx, "ss", "-tlnp", "sport", "=", fmt.Sprintf(":%d", port)).Output() //nolint:gosec // port is an integer, not user input
 	if err != nil {
 		return ""
 	}
@@ -433,7 +433,7 @@ func getPTYTTYs(ctx context.Context) map[string]struct{} {
 func hasAssociatedPTY(sshdPID string, ptyTTYs map[string]struct{}) bool {
 	// Read the children of this sshd process
 	childrenPath := filepath.Join("/proc", sshdPID, "task", sshdPID, "children")
-	data, err := os.ReadFile(childrenPath)
+	data, err := os.ReadFile(childrenPath) //nolint:gosec // path constructed from numeric PID, not user input
 	if err != nil {
 		// If we can't read children, check if the sshd process itself has a TTY
 		return checkProcessTTY(sshdPID, ptyTTYs)
@@ -452,7 +452,7 @@ func hasAssociatedPTY(sshdPID string, ptyTTYs map[string]struct{}) bool {
 // checkProcessTTY checks if a process has a controlling TTY that matches `who` output.
 func checkProcessTTY(pid string, ptyTTYs map[string]struct{}) bool {
 	statPath := filepath.Join("/proc", pid, "stat")
-	data, err := os.ReadFile(statPath)
+	data, err := os.ReadFile(statPath) //nolint:gosec // path constructed from numeric PID, not user input
 	if err != nil {
 		return false
 	}

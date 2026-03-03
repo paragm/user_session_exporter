@@ -23,6 +23,7 @@ type LastlogCollector struct {
 	cacheTTL  time.Duration
 }
 
+// NewLastlogCollector creates a new LastlogCollector.
 func NewLastlogCollector(cfg Config) *LastlogCollector {
 	return &LastlogCollector{
 		cfg: cfg,
@@ -36,6 +37,7 @@ func NewLastlogCollector(cfg Config) *LastlogCollector {
 	}
 }
 
+// Describe implements prometheus.Collector.
 func (c *LastlogCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- c.descLastlog
 }
