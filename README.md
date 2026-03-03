@@ -73,6 +73,7 @@ sudo systemctl enable --now user_sessions_exporter
 | `PORT` | Override listen port |
 | `LOG_LEVEL` | Override log level |
 | `EXCLUDE_USERS` | Comma-separated usernames to exclude from metrics |
+| `SSH_PORTS` | Comma-separated SSH ports to monitor (default: `22`) |
 
 ### Example Environment File
 
@@ -80,6 +81,7 @@ sudo systemctl enable --now user_sessions_exporter
 PORT=10041
 LOG_LEVEL=info
 EXCLUDE_USERS=nobody,daemon,www-data,zabbix,prometheus,grafana,postgres,mysql,redis,cadvisor
+# SSH_PORTS=22,2222,22022
 ```
 
 ## Endpoints

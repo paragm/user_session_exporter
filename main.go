@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -60,6 +61,27 @@ func main() {
 		}
 	}
 
+	// Parse SSH ports from environment (default: 22)
+	sshPorts := []int{22}
+	if sp := os.Getenv("SSH_PORTS"); sp != "" {
+		sshPorts = nil
+		for _, s := range strings.Split(sp, ",") {
+			s = strings.TrimSpace(s)
+			if s == "" {
+				continue
+			}
+			p, err := strconv.Atoi(s)
+			if err != nil {
+				logger.Error("invalid SSH_PORTS value, must be comma-separated integers", "value", s)
+				os.Exit(1)
+			}
+			sshPorts = append(sshPorts, p)
+		}
+		if len(sshPorts) == 0 {
+			sshPorts = []int{22}
+		}
+	}
+
 	// Resolve hostname once at startup
 	hostname, err := os.Hostname()
 	if err != nil {
@@ -71,6 +93,7 @@ func main() {
 		ExcludeUsers: excludeUsers,
 		Logger:       logger,
 		Hostname:     hostname,
+		SSHPorts:     sshPorts,
 	}
 
 	// Fresh registry — no default Go runtime metrics

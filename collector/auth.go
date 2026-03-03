@@ -14,6 +14,28 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
+// failedLoginPatterns defines the sshd log patterns that indicate a failed login attempt.
+var failedLoginPatterns = []string{
+	"Failed password",
+	"Invalid user",
+	"Connection closed by authenticating user",
+}
+
+// isFailedLogin returns true if the log line matches any known failed login pattern.
+// The "Received disconnect from" pattern requires "[preauth]" on the same line.
+func isFailedLogin(line string) bool {
+	for _, p := range failedLoginPatterns {
+		if strings.Contains(line, p) {
+			return true
+		}
+	}
+	// Compound pattern: pre-auth disconnect (brute-force scanners)
+	if strings.Contains(line, "Received disconnect from") && strings.Contains(line, "[preauth]") {
+		return true
+	}
+	return false
+}
+
 // AuthCollector collects user_sessions_failed_logins_1h and user_sessions_root_logins_total.
 type AuthCollector struct {
 	cfg        Config
@@ -108,7 +130,7 @@ func countFailedLoginsJournalctl(ctx context.Context) (int, error) {
 	count := 0
 	scanner := bufio.NewScanner(strings.NewReader(string(out)))
 	for scanner.Scan() {
-		if strings.Contains(scanner.Text(), "Failed password") {
+		if isFailedLogin(scanner.Text()) {
 			count++
 		}
 	}
@@ -131,7 +153,7 @@ func countFailedLoginsAuthLog() (int, error) {
 	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {
 		line := scanner.Text()
-		if !strings.Contains(line, "Failed password") {
+		if !isFailedLogin(line) {
 			continue
 		}
 

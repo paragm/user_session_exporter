@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.1] - 2026-03-03
+
+### Added
+- Configurable SSH ports via `SSH_PORTS` env var (comma-separated, default: `22`)
+- Expanded failed login detection: now matches `Invalid user`, `Connection closed by authenticating user`, and `Received disconnect from ... [preauth]` in addition to `Failed password`
+
+### Fixed
+- Resource metrics (`user_sessions_cpu_ratio`, `user_sessions_memory_bytes`, `user_sessions_process_count`) now use real UID (`ruser`) instead of effective UID (`user`), correctly attributing `sudo` processes to the original user
+
 ## [1.3.0] - 2026-02-28
 
 ### Changed
