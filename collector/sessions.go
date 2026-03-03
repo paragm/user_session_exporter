@@ -75,7 +75,7 @@ func (c *SessionCollector) Collect(ch chan<- prometheus.Metric) {
 		c.cfg.Logger.Error("failed to collect non-PTY SSH sessions", "err", err)
 	}
 
-	if vncSessions, err := collectVNCSessions(context.Background(), c.cfg.Logger, c.cfg.UserCache); err == nil {
+	if vncSessions, err := collectVNCSessions(context.Background(), c.cfg.UserCache); err == nil {
 		allSessions = append(allSessions, vncSessions...)
 	} else {
 		c.cfg.Logger.Error("failed to collect VNC sessions", "err", err)
@@ -266,7 +266,7 @@ func resolveVNCUser(processField string, localPort int, cache *UserLookupCache) 
 }
 
 // collectVNCSessions detects VNC sessions on ports 5901-64999.
-func collectVNCSessions(ctx context.Context, logger *slog.Logger, cache *UserLookupCache) ([]Session, error) {
+func collectVNCSessions(ctx context.Context, cache *UserLookupCache) ([]Session, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 	out, err := exec.CommandContext(ctx, "ss", "-tnp", "state", "established",
