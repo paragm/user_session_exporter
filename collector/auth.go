@@ -25,6 +25,7 @@ type AuthCollector struct {
 	lastRootCheck  time.Time
 }
 
+// NewAuthCollector creates a new AuthCollector.
 func NewAuthCollector(cfg Config) *AuthCollector {
 	return &AuthCollector{
 		cfg: cfg,
@@ -42,11 +43,13 @@ func NewAuthCollector(cfg Config) *AuthCollector {
 	}
 }
 
+// Describe implements prometheus.Collector.
 func (c *AuthCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- c.descFailed
 	ch <- c.descRoot
 }
 
+// Collect implements prometheus.Collector.
 func (c *AuthCollector) Collect(ch chan<- prometheus.Metric) {
 	ctx := context.Background()
 
@@ -162,7 +165,7 @@ func countRootLoginsJournalctl(ctx context.Context, since time.Time) (int, error
 	ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
 	defer cancel()
 	sinceStr := since.Format("2006-01-02 15:04:05")
-	out, err := exec.CommandContext(ctx, "journalctl",
+	out, err := exec.CommandContext(ctx, "journalctl", //nolint:gosec // sinceStr is a formatted timestamp, not user input
 		"-u", "ssh.service", "-u", "sshd.service",
 		"--since", sinceStr,
 		"--no-pager", "-q",
