@@ -201,23 +201,11 @@ func collectNonPTYSSH(ctx context.Context, logger *slog.Logger, cache *UserLooku
 			continue
 		}
 
-		// Extract remote IP from peer address (field varies based on header presence)
-		var peerAddr string
-		var processField string
-		for i, f := range fields {
-			if strings.Contains(f, "pid=") {
-				processField = f
-				if i >= 2 {
-					peerAddr = fields[i-1]
-				}
-				break
-			}
-		}
+		_, peerAddr, processField := parseSSFields(fields)
 		if processField == "" {
 			continue
 		}
 
-		// Extract remote IP (strip port)
 		remoteIP := extractIP(peerAddr)
 
 		// Extract PID
@@ -250,11 +238,27 @@ func collectNonPTYSSH(ctx context.Context, logger *slog.Logger, cache *UserLooku
 	return sessions, nil
 }
 
+// resolveVNCUser resolves the username for a VNC connection from the ss process field.
+// Falls back to finding the Xvnc process listening on the given local port.
+func resolveVNCUser(processField string, localPort int, logger *slog.Logger, cache *UserLookupCache) string {
+	if processField != "" {
+		matches := ssPIDRegex.FindStringSubmatch(processField)
+		if len(matches) >= 2 {
+			if u, err := resolveProcessUser(matches[1], cache); err == nil {
+				return u
+			}
+		}
+	}
+	if localPort > 0 {
+		return resolveVNCOwner(context.Background(), localPort, logger, cache)
+	}
+	return ""
+}
+
 // collectVNCSessions detects VNC sessions on ports 5901-64999.
 func collectVNCSessions(ctx context.Context, logger *slog.Logger, cache *UserLookupCache) ([]Session, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
-	// ss filter for sport range: 5901 to 64999
 	out, err := exec.CommandContext(ctx, "ss", "-tnp", "state", "established",
 		"(", "sport", ">=", ":5901", "sport", "<=", ":64999", ")").Output()
 	if err != nil {
@@ -274,38 +278,10 @@ func collectVNCSessions(ctx context.Context, logger *slog.Logger, cache *UserLoo
 			continue
 		}
 
-		// Extract local port and remote IP
-		var localAddr, peerAddr, processField string
-		for i, f := range fields {
-			if strings.Contains(f, "pid=") {
-				processField = f
-				if i >= 2 {
-					localAddr = fields[i-2]
-					peerAddr = fields[i-1]
-				}
-				break
-			}
-		}
-
-		remoteIP := extractIP(peerAddr)
+		localAddr, peerAddr, processField := parseSSFields(fields)
 		localPort := extractPort(localAddr)
 
-		// Try to resolve the VNC server process owner via PID
-		username := ""
-		if processField != "" {
-			matches := ssPIDRegex.FindStringSubmatch(processField)
-			if len(matches) >= 2 {
-				if u, err := resolveProcessUser(matches[1], cache); err == nil {
-					username = u
-				}
-			}
-		}
-
-		// If PID resolution failed, try to find Xvnc process listening on this port
-		if username == "" && localPort > 0 {
-			username = resolveVNCOwner(context.Background(), localPort, logger, cache)
-		}
-
+		username := resolveVNCUser(processField, localPort, logger, cache)
 		if username == "" {
 			continue
 		}
@@ -318,12 +294,27 @@ func collectVNCSessions(ctx context.Context, logger *slog.Logger, cache *UserLoo
 		sessions = append(sessions, Session{
 			Username:    username,
 			TTY:         fmt.Sprintf("vnc:%s", displayNum),
-			FromIP:      remoteIP,
+			FromIP:      extractIP(peerAddr),
 			SessionType: "vnc",
 		})
 	}
 
 	return sessions, nil
+}
+
+// parseSSFields extracts localAddr, peerAddr, and process field from ss output fields.
+func parseSSFields(fields []string) (localAddr, peerAddr, processField string) {
+	for i, f := range fields {
+		if strings.Contains(f, "pid=") {
+			processField = f
+			if i >= 2 {
+				localAddr = fields[i-2]
+				peerAddr = fields[i-1]
+			}
+			return
+		}
+	}
+	return
 }
 
 // resolveProcessUser reads /proc/<pid>/status to find the UID, then resolves
