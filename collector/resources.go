@@ -113,7 +113,7 @@ func collectUserResources(ctx context.Context) (map[string]*userResources, error
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 	// The = suffix suppresses headers
-	out, err := exec.CommandContext(ctx, "ps", "-eo", "user=,pcpu=,rss=").Output()
+	out, err := exec.CommandContext(ctx, "ps", "-eo", "ruser=,pcpu=,rss=").Output()
 	if err != nil {
 		return nil, fmt.Errorf("ps: %w", err)
 	}

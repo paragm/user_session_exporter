@@ -45,7 +45,7 @@ func (c *SSHCollector) Describe(ch chan<- *prometheus.Desc) {
 
 // Collect implements prometheus.Collector.
 func (c *SSHCollector) Collect(ch chan<- prometheus.Metric) {
-	sshCount, err := countSSHConnections(context.Background())
+	sshCount, err := countSSHConnections(context.Background(), c.cfg.SSHPorts)
 	if err != nil {
 		c.cfg.Logger.Error("failed to count SSH connections", "err", err)
 		sshCount = 0
@@ -66,11 +66,20 @@ func (c *SSHCollector) Collect(ch chan<- prometheus.Metric) {
 	)
 }
 
-// countSSHConnections counts ESTABLISHED TCP connections on port 22.
-func countSSHConnections(ctx context.Context) (int, error) {
+// countSSHConnections counts ESTABLISHED TCP connections on the configured SSH ports.
+func countSSHConnections(ctx context.Context, ports []int) (int, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
-	out, err := exec.CommandContext(ctx, "ss", "-tn", "state", "established", "sport", "=", ":22").Output()
+	args := []string{"-tn", "state", "established"}
+	filter := SSHPortFilter(ports)
+	if len(filter) == 1 {
+		// Single port: sport = :PORT
+		args = append(args, "sport", "=", filter[0])
+	} else {
+		// Multiple ports: ( sport = :P1 or sport = :P2 )
+		args = append(args, filter...)
+	}
+	out, err := exec.CommandContext(ctx, "ss", args...).Output()
 	if err != nil {
 		return 0, fmt.Errorf("ss ssh: %w", err)
 	}

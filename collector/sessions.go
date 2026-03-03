@@ -69,7 +69,7 @@ func (c *SessionCollector) Collect(ch chan<- prometheus.Metric) {
 		c.cfg.Logger.Error("failed to collect PTY sessions", "err", err)
 	}
 
-	if sshSessions, err := collectNonPTYSSH(context.Background(), c.cfg.Logger, c.cfg.UserCache); err == nil {
+	if sshSessions, err := collectNonPTYSSH(context.Background(), c.cfg.Logger, c.cfg.UserCache, c.cfg.SSHPorts); err == nil {
 		allSessions = append(allSessions, sshSessions...)
 	} else {
 		c.cfg.Logger.Error("failed to collect non-PTY SSH sessions", "err", err)
@@ -176,13 +176,20 @@ func collectWhoSessions(ctx context.Context) ([]Session, error) {
 var ssPIDRegex = regexp.MustCompile(`pid=(\d+)`)
 
 // collectNonPTYSSH detects non-PTY SSH sessions (VS Code Remote, scp, sftp, tunnels)
-// by parsing `ss` output for established connections on port 22 and resolving PID→UID.
-func collectNonPTYSSH(ctx context.Context, logger *slog.Logger, cache *UserLookupCache) ([]Session, error) {
+// by parsing `ss` output for established connections on the configured SSH ports and resolving PID→UID.
+func collectNonPTYSSH(ctx context.Context, logger *slog.Logger, cache *UserLookupCache, ports []int) ([]Session, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
-	out, err := exec.CommandContext(ctx, "ss", "-tnp", "state", "established", "sport", "=", ":22").Output()
+	args := []string{"-tnp", "state", "established"}
+	filter := SSHPortFilter(ports)
+	if len(filter) == 1 {
+		args = append(args, "sport", "=", filter[0])
+	} else {
+		args = append(args, filter...)
+	}
+	out, err := exec.CommandContext(ctx, "ss", args...).Output()
 	if err != nil {
-		return nil, fmt.Errorf("ss port 22: %w", err)
+		return nil, fmt.Errorf("ss ssh ports: %w", err)
 	}
 
 	// Get list of PTY-session PIDs to exclude (these are already counted by `who`)
