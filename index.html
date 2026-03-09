@@ -121,6 +121,9 @@ body {
   background: linear-gradient(135deg, #16213e 0%, #1a1a2e 50%, #0f3460 100%);
   color: #fff;
   padding: 72px 56px 56px;
+  position: sticky;
+  top: 0;
+  z-index: 50;
 }
 
 .hero h2 {
@@ -274,6 +277,69 @@ code {
 }
 
 .overlay.show { display: block; }
+
+/* Dashboard screenshot placeholder */
+.dashboard-img-wrap {
+  margin: 24px 0;
+  border: 2px dashed #c8c8d8;
+  border-radius: 10px;
+  background: #f0f0f4;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  overflow: hidden;
+  position: relative;
+}
+
+.dashboard-img-wrap img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+}
+
+.dashboard-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 24px;
+  color: #888;
+  font-size: 0.92rem;
+  text-align: center;
+  gap: 12px;
+}
+
+.dashboard-placeholder .placeholder-icon {
+  font-size: 2.4rem;
+  opacity: 0.45;
+}
+
+.dashboard-placeholder .placeholder-text {
+  color: #666680;
+  font-style: italic;
+}
+
+/* Port hyperlinks */
+.port-link {
+  color: #4cc9c0;
+  text-decoration: none;
+  font-weight: inherit;
+}
+
+.port-link:hover {
+  text-decoration: underline;
+  color: #6fe8df;
+}
+
+.table-port-link {
+  color: #2d4a8c;
+  text-decoration: none;
+  border-bottom: 1px dotted #2d4a8c;
+}
+
+.table-port-link:hover {
+  color: #1a1a2e;
+  border-bottom-style: solid;
+}
 </style>
 </head>
 <body>
@@ -298,9 +364,10 @@ code {
     <a href="#configuration">Configuration</a>
     <a href="#endpoints">Endpoints</a>
     <a href="#building">Building</a>
+    <a href="#dashboard">Dashboard</a>
   </nav>
   <div class="sidebar-footer">
-    Default port <code>:10041</code>
+    Default port <a href="https://github.com/prometheus/prometheus/wiki/Default-port-allocations" class="port-link" target="_blank" rel="noopener"><code>:10041</code></a>
   </div>
 </aside>
 
@@ -478,7 +545,7 @@ sudo systemctl enable --now user_sessions_exporter</code></pre>
           <tbody>
             <tr>
               <td><code>-web.listen-address</code></td>
-              <td><code>:10041</code></td>
+              <td><code><a href="https://github.com/prometheus/prometheus/wiki/Default-port-allocations" class="table-port-link" target="_blank" rel="noopener">:10041</a></code></td>
               <td>Address to listen on for metrics</td>
             </tr>
             <tr>
@@ -593,6 +660,19 @@ sudo systemctl enable --now user_sessions_exporter</code></pre>
             </tr>
           </tbody>
         </table>
+      </div>
+    </section>
+
+    <!-- Dashboard -->
+    <section id="dashboard">
+      <h3>Dashboard</h3>
+      <p>Grafana dashboard displaying User Session Exporter metrics.</p>
+      <div class="dashboard-img-wrap">
+        <div class="dashboard-placeholder">
+          <span class="placeholder-icon">&#128202;</span>
+          <span class="placeholder-text">Dashboard screenshot &mdash; add dashboard.png to this branch</span>
+        </div>
+        <img src="dashboard.png" alt="Grafana dashboard displaying User Session Exporter metrics" onerror="this.style.display='none';" style="position: relative; z-index: 1;">
       </div>
     </section>
 
