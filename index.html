@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>User Session Exporter</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: #2d2d2d;
+  background: #fff;
+  line-height: 1.6;
+}
+
+/* Sidebar */
+.sidebar {
+  position: fixed;
+  top: 0; left: 0;
+  width: 260px; height: 100vh;
+  background: #1a1a2e;
+  color: #c8c8d8;
+  overflow-y: auto;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.3s ease;
+}
+
+.sidebar-header {
+  padding: 32px 24px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.sidebar-header h1 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.01em;
+}
+
+.sidebar-header .tagline {
+  font-size: 0.78rem;
+  color: #8888a8;
+  margin-top: 6px;
+  line-height: 1.5;
+}
+
+.sidebar-header .gh-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+  font-size: 0.8rem;
+  color: #4cc9c0;
+  text-decoration: none;
+}
+
+.sidebar-header .gh-link:hover { color: #6fe8df; }
+
+.sidebar-header .gh-link svg { width: 16px; height: 16px; fill: currentColor; }
+
+.sidebar nav { padding: 16px 0; flex: 1; }
+
+.sidebar nav a {
+  display: block;
+  padding: 9px 24px;
+  color: #b0b0c8;
+  text-decoration: none;
+  font-size: 0.88rem;
+  font-weight: 500;
+  transition: background 0.15s, color 0.15s;
+}
+
+.sidebar nav a:hover,
+.sidebar nav a.active {
+  background: rgba(76,201,192,0.1);
+  color: #4cc9c0;
+}
+
+.sidebar-footer {
+  padding: 16px 24px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  font-size: 0.75rem;
+  color: #666680;
+}
+
+.sidebar-footer code {
+  background: rgba(76,201,192,0.15);
+  color: #4cc9c0;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 0.8rem;
+}
+
+/* Mobile toggle */
+.menu-toggle {
+  display: none;
+  position: fixed;
+  top: 14px; left: 14px;
+  z-index: 200;
+  background: #1a1a2e;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  width: 40px; height: 40px;
+  font-size: 1.3rem;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Main content */
+.main {
+  margin-left: 260px;
+  min-height: 100vh;
+}
+
+.hero {
+  background: linear-gradient(135deg, #16213e 0%, #1a1a2e 50%, #0f3460 100%);
+  color: #fff;
+  padding: 72px 56px 56px;
+}
+
+.hero h2 {
+  font-size: 2.4rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-bottom: 12px;
+}
+
+.hero p {
+  font-size: 1.15rem;
+  color: #b0c8d8;
+  max-width: 640px;
+  line-height: 1.7;
+}
+
+.hero .badge {
+  display: inline-block;
+  margin-top: 20px;
+  background: rgba(76,201,192,0.18);
+  color: #4cc9c0;
+  padding: 5px 14px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.content { padding: 0 56px 80px; }
+
+section { padding-top: 56px; }
+
+section h3 {
+  font-size: 1.55rem;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #e8e8f0;
+}
+
+section h4 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #2d2d4e;
+  margin: 28px 0 12px;
+}
+
+p, li { font-size: 0.95rem; color: #444; }
+p + p { margin-top: 12px; }
+
+ul.feature-list {
+  list-style: none;
+  padding: 0;
+}
+
+ul.feature-list li {
+  position: relative;
+  padding: 10px 0 10px 28px;
+  border-bottom: 1px solid #f0f0f4;
+}
+
+ul.feature-list li::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 16px;
+  width: 10px; height: 10px;
+  background: #4cc9c0;
+  border-radius: 50%;
+}
+
+ul.feature-list li strong { color: #1a1a2e; }
+
+/* Tables */
+.table-wrap { overflow-x: auto; margin: 16px 0; }
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+table th {
+  text-align: left;
+  background: #1a1a2e;
+  color: #fff;
+  padding: 12px 16px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+table td {
+  padding: 10px 16px;
+  border-bottom: 1px solid #eaeaf0;
+  vertical-align: top;
+}
+
+table tr:nth-child(even) td { background: #f7f7fb; }
+table tr:hover td { background: #eef6f5; }
+
+table code {
+  background: #eef0f8;
+  color: #2d4a8c;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 0.84rem;
+  white-space: nowrap;
+}
+
+/* Code blocks */
+pre {
+  background: #1e1e30;
+  color: #d4d4e8;
+  padding: 20px 24px;
+  border-radius: 8px;
+  overflow-x: auto;
+  font-size: 0.85rem;
+  line-height: 1.7;
+  margin: 14px 0;
+}
+
+pre code { background: none; color: inherit; padding: 0; }
+
+code {
+  background: #eef0f8;
+  color: #2d4a8c;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 0.88rem;
+}
+
+/* Responsive */
+@media (max-width: 860px) {
+  .sidebar { transform: translateX(-100%); }
+  .sidebar.open { transform: translateX(0); }
+  .menu-toggle { display: flex; }
+  .main { margin-left: 0; }
+  .hero { padding: 56px 28px 40px; }
+  .hero h2 { font-size: 1.7rem; }
+  .content { padding: 0 24px 60px; }
+  table { font-size: 0.82rem; }
+  table th, table td { padding: 8px 10px; }
+}
+
+/* Overlay for mobile sidebar */
+.overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  z-index: 90;
+}
+
+.overlay.show { display: block; }
+</style>
+</head>
+<body>
+
+<button class="menu-toggle" onclick="toggleSidebar()" aria-label="Toggle menu">&#9776;</button>
+<div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
+
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <h1>User Session Exporter</h1>
+    <p class="tagline">Prometheus exporter for active user sessions on Linux hosts.</p>
+    <a class="gh-link" href="https://github.com/paragm/user_session_exporter" target="_blank" rel="noopener">
+      <svg viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+      paragm/user_session_exporter
+    </a>
+  </div>
+  <nav>
+    <a href="#overview">Overview</a>
+    <a href="#features">Features</a>
+    <a href="#metrics">Metrics</a>
+    <a href="#installation">Installation</a>
+    <a href="#configuration">Configuration</a>
+    <a href="#endpoints">Endpoints</a>
+    <a href="#building">Building</a>
+  </nav>
+  <div class="sidebar-footer">
+    Default port <code>:10041</code>
+  </div>
+</aside>
+
+<div class="main">
+  <div class="hero">
+    <h2>User Session Exporter</h2>
+    <p>Prometheus exporter for active user sessions, authentication events, and per-user resource usage on Linux hosts.</p>
+    <span class="badge">Prometheus &middot; Go &middot; Linux</span>
+  </div>
+
+  <div class="content">
+
+    <!-- Overview -->
+    <section id="overview">
+      <h3>Overview</h3>
+      <p>User Session Exporter collects real-time data about user sessions, authentication events, and per-user resource consumption. It exposes 14 Prometheus metrics covering sessions, security, and resource usage.</p>
+      <ul class="feature-list">
+        <li><strong>Active sessions</strong> &mdash; PTY terminals, SSH (including non-PTY like VS Code Remote, scp, sftp), and VNC</li>
+        <li><strong>Authentication</strong> &mdash; Failed SSH login attempts, root logins</li>
+        <li><strong>Resources</strong> &mdash; Per-user CPU ratio, memory (RSS), and process count</li>
+        <li><strong>Identity</strong> &mdash; User info labels, last login timestamps</li>
+        <li><strong>Deduplication</strong> &mdash; Sessions detected from multiple sources (<code>who</code>, <code>ss</code>, <code>/proc</code>) and deduplicated</li>
+      </ul>
+    </section>
+
+    <!-- Features -->
+    <section id="features">
+      <h3>Features</h3>
+      <ul class="feature-list">
+        <li><strong>Lightweight</strong> &mdash; Single static binary with no external dependencies</li>
+        <li><strong>Multi-source detection</strong> &mdash; Correlates data from <code>who</code>, <code>ss</code>, and <code>/proc</code> for accurate session tracking</li>
+        <li><strong>Per-user resource metrics</strong> &mdash; CPU ratio, RSS memory, and process count broken down by user</li>
+        <li><strong>Security monitoring</strong> &mdash; Track failed SSH logins and root login events</li>
+        <li><strong>Configurable exclusions</strong> &mdash; Exclude system or service accounts from metrics via environment variable</li>
+        <li><strong>Health and readiness endpoints</strong> &mdash; Built-in <code>/-/healthy</code> and <code>/-/ready</code> endpoints</li>
+        <li><strong>Systemd integration</strong> &mdash; Ships with service and environment file templates</li>
+      </ul>
+    </section>
+
+    <!-- Metrics -->
+    <section id="metrics">
+      <h3>Metrics</h3>
+      <p>All metrics are prefixed with <code>user_sessions_</code>. The exporter exposes 14 metrics:</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Metric</th>
+              <th>Type</th>
+              <th>Labels</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>user_sessions_logged_in_users</code></td>
+              <td>Gauge</td>
+              <td>&mdash;</td>
+              <td>Number of unique users with active sessions</td>
+            </tr>
+            <tr>
+              <td><code>user_sessions_session_active</code></td>
+              <td>Gauge</td>
+              <td><code>username</code>, <code>tty</code>, <code>from_ip</code>, <code>session_type</code></td>
+              <td>Active session indicator (1 per session)</td>
+            </tr>
+            <tr>
+              <td><code>user_sessions_failed_logins_1h</code></td>
+              <td>Gauge</td>
+              <td>&mdash;</td>
+              <td>Failed SSH logins in the last 60 minutes</td>
+            </tr>
+            <tr>
+              <td><code>user_sessions_root_logins_total</code></td>
+              <td>Counter</td>
+              <td>&mdash;</td>
+              <td>Cumulative root login count</td>
+            </tr>
+            <tr>
+              <td><code>user_sessions_ssh_connections</code></td>
+              <td>Gauge</td>
+              <td>&mdash;</td>
+              <td>Established SSH connections (port 22)</td>
+            </tr>
+            <tr>
+              <td><code>user_sessions_vnc_connections</code></td>
+              <td>Gauge</td>
+              <td>&mdash;</td>
+              <td>Established VNC connections (ports 5901&ndash;64999)</td>
+            </tr>
+            <tr>
+              <td><code>user_sessions_remote_connections</code></td>
+              <td>Gauge</td>
+              <td>&mdash;</td>
+              <td>Total remote connections (SSH + VNC)</td>
+            </tr>
+            <tr>
+              <td><code>user_sessions_cpu_ratio</code></td>
+              <td>Gauge</td>
+              <td><code>username</code></td>
+              <td>Aggregate CPU usage ratio per user (0.0&ndash;1.0)</td>
+            </tr>
+            <tr>
+              <td><code>user_sessions_memory_bytes</code></td>
+              <td>Gauge</td>
+              <td><code>username</code></td>
+              <td>Aggregate RSS in bytes per user</td>
+            </tr>
+            <tr>
+              <td><code>user_sessions_process_count</code></td>
+              <td>Gauge</td>
+              <td><code>username</code></td>
+              <td>Number of processes per user</td>
+            </tr>
+            <tr>
+              <td><code>user_sessions_last_login_timestamp_seconds</code></td>
+              <td>Gauge</td>
+              <td><code>username</code></td>
+              <td>Unix timestamp of last login</td>
+            </tr>
+            <tr>
+              <td><code>user_sessions_user_info</code></td>
+              <td>Gauge</td>
+              <td><code>username</code>, <code>real_name</code>, <code>uid</code>, <code>primary_group</code></td>
+              <td>User identity (always 1)</td>
+            </tr>
+            <tr>
+              <td><code>user_sessions_up</code></td>
+              <td>Gauge</td>
+              <td>&mdash;</td>
+              <td>Exporter health (always 1 on success)</td>
+            </tr>
+            <tr>
+              <td><code>user_sessions_scrape_duration_seconds</code></td>
+              <td>Gauge</td>
+              <td>&mdash;</td>
+              <td>Duration of last collection</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Installation -->
+    <section id="installation">
+      <h3>Installation</h3>
+
+      <h4>From Source</h4>
+<pre><code>git clone https://github.com/paragm/user_session_exporter.git
+cd user_session_exporter
+make build
+sudo make install</code></pre>
+
+      <h4>Systemd Service</h4>
+<pre><code>sudo cp examples/systemd/user_sessions_exporter.service /etc/systemd/system/
+sudo cp examples/systemd/user_sessions_exporter.env /etc/default/user_sessions_exporter
+sudo systemctl daemon-reload
+sudo systemctl enable --now user_sessions_exporter</code></pre>
+    </section>
+
+    <!-- Configuration -->
+    <section id="configuration">
+      <h3>Configuration</h3>
+
+      <h4>CLI Flags</h4>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Flag</th>
+              <th>Default</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>-web.listen-address</code></td>
+              <td><code>:10041</code></td>
+              <td>Address to listen on for metrics</td>
+            </tr>
+            <tr>
+              <td><code>-log.level</code></td>
+              <td><code>info</code></td>
+              <td>Log level: debug, info, warn, error</td>
+            </tr>
+            <tr>
+              <td><code>-version</code></td>
+              <td>&mdash;</td>
+              <td>Print version and exit</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h4>Environment Variables</h4>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Variable</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>PORT</code></td>
+              <td>Override listen port</td>
+            </tr>
+            <tr>
+              <td><code>LOG_LEVEL</code></td>
+              <td>Override log level</td>
+            </tr>
+            <tr>
+              <td><code>EXCLUDE_USERS</code></td>
+              <td>Comma-separated usernames to exclude from metrics</td>
+            </tr>
+            <tr>
+              <td><code>SSH_PORTS</code></td>
+              <td>Comma-separated SSH ports to monitor (default: 22)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Endpoints -->
+    <section id="endpoints">
+      <h3>Endpoints</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Path</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>/metrics</code></td>
+              <td>Prometheus metrics</td>
+            </tr>
+            <tr>
+              <td><code>/-/healthy</code></td>
+              <td>Health check</td>
+            </tr>
+            <tr>
+              <td><code>/-/ready</code></td>
+              <td>Readiness check</td>
+            </tr>
+            <tr>
+              <td><code>/</code></td>
+              <td>Landing page</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Building -->
+    <section id="building">
+      <h3>Building</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Command</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>make build</code></td>
+              <td>Build for current platform</td>
+            </tr>
+            <tr>
+              <td><code>make build-linux</code></td>
+              <td>Cross-compile for Linux amd64</td>
+            </tr>
+            <tr>
+              <td><code>make test</code></td>
+              <td>Run tests</td>
+            </tr>
+            <tr>
+              <td><code>make lint</code></td>
+              <td>Run linter</td>
+            </tr>
+            <tr>
+              <td><code>make coverage</code></td>
+              <td>Generate coverage report</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<script>
+function toggleSidebar(){var s=document.getElementById('sidebar'),o=document.getElementById('overlay');s.classList.toggle('open');o.classList.toggle('show');}
+</script>
+</body>
+</html>
