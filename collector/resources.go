@@ -112,8 +112,8 @@ type userResources struct {
 func collectUserResources(ctx context.Context) (map[string]*userResources, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
-	// The = suffix suppresses headers
-	out, err := exec.CommandContext(ctx, "ps", "-eo", "ruser=,pcpu=,rss=").Output()
+	// Use ruser:32 to avoid the default 8-char column width truncation.
+	out, err := exec.CommandContext(ctx, "ps", "-eo", "ruser:32,pcpu=,rss=").Output()
 	if err != nil {
 		return nil, fmt.Errorf("ps: %w", err)
 	}
